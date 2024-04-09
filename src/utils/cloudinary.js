@@ -9,20 +9,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const uploadOnClodinary = async (localFIle) =>{
+const uploadOnCloudinary = async (localFIle) =>{
     try {
-        if (!localFIle) return null;
-
-           const response = await cloudinary.uploader.upload(localFIle, {
-                resource_type: "auto"
+        // if (!localFIle) return null
+        
+        const resp = await cloudinary.uploader.upload(localFIle , {
+            resource_type: "auto"
         })
-        console.log("File has been updated succefully");
-        response.url;
-        return response
+        // console.log("File has been updated succefully",resp.url);
+        fs.unlinkSync(localFIle);
+        return resp;
     } catch (error) {
         fs.unlinkSync(localFIle) //remove the locally saved temporary file as the upload operation is not succeed
+        // console.log("not done");
     }
 }
 
 
-export {uploadOnClodinary}
+export {uploadOnCloudinary}
