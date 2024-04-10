@@ -11,9 +11,9 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFIle) =>{
     try {
-        // if (!localFIle) return null
+        if (!localFIle) return null
         
-        const resp = await cloudinary.uploader.upload(localFIle , {
+        const resp = await cloudinary.uploader.upload(localFIle.toString() , {
             resource_type: "auto"
         })
         // console.log("File has been updated succefully",resp.url);
