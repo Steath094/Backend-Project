@@ -78,11 +78,48 @@ const getUserTweets = asyncHandler(async (req, res) => {
 
 const updateTweet = asyncHandler(async (req, res) => {
     //TODO: update tweet
+    const { toUpdateContent } = req.body;
+    const { tweetId } = req.params;
+    const userId = req.user?.id;
+    if (!toUpdateContent) {
+        throw new ApiError(400,"Content field is required")
+    }
+    const tweet =await Tweet.findById(tweetId);
+    if (!tweet) {
+        throw new ApiError(400,"Invald Tweet id");
+    }
+    if (tweet.owner!==userId) {
+        throw new ApiError(401,"Unauthorized Request access")
+    }
+    tweet.content = toUpdateContent;
+    await tweet.save({validateBeforeSave: false})
     
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Tweet updated Successfully"))
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
     //TODO: delete tweet
+    try {
+        const userId = req.user?._id;
+        const { tweetId } = req.params;
+        if (!tweetId) {
+            throw new ApiError(400,"Tweet id is required");
+        }
+        const result = await Tweet.deleteOne({_id:tweetId,owner: userId})
+        if (result.deletedCount === 0) {
+            return res.status(404).json(new ApiResponse(404, null, "Tweeet not found or not authorized"));
+        }
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200,[],"Tweet Deleted Succesfully")
+        )
+    } catch (error) {
+        return res.status(500).json(new ApiResponse(500, null, "Failed to delete tweet"));
+    }
+
 })
 
 export {
