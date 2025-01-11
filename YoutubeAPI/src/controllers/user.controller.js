@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js"
 import { User} from "../models/user.model.js"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose";
@@ -279,6 +279,17 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
     if (!avatarLocalPath) {
         throw new ApiError(400,"Avatar file is missing")
     }
+    const oldUser = await User.findById(req.user?._id);
+        if (!oldUser) {
+            throw new ApiError(404, "User not found");
+        }
+
+        const oldAvatarUrl = oldUser.avatar;
+
+        // Delete old avatar from Cloudinary if it exists
+    if (oldAvatarUrl) {
+            await deleteFromCloudinary(oldAvatarUrl); // Ensure this function is implemented
+    }
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     if (!avatar) {
         throw new ApiError(400,"Error while uploading on clodinary")
@@ -305,6 +316,17 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
     if (!coverImageLocalPath) {
         throw new ApiError(400,"Avatar file is missing")
     }
+    const oldUser = await User.findById(req.user?._id);
+        if (!oldUser) {
+            throw new ApiError(404, "User not found");
+        }
+
+        const oldCoverImageUrl = oldUser.coverImage;
+
+        // Delete old avatar from Cloudinary if it exists
+    if (oldCoverImageUrl) {
+            await deleteFromCloudinary(oldCoverImageUrl); // Ensure this function is implemented
+    }
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
     if (!coverImage.url) {
         throw new ApiError(400,"Error while uploading on clodinary")
@@ -327,7 +349,9 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
 })
 
 const getUserChannelProfile = asyncHandler(async(req,res)=>{
-    const {userName} = req.params
+    const { userName } = req.params
+    console.log(req.params);
+    
     if (!userName?.trim()) {
         throw new ApiError(400,"userName is missing")
     }
