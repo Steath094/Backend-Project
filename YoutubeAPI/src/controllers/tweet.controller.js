@@ -7,17 +7,17 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
-    const user = await User.findById(req.user?._id);
-    if (!user) {
+    const userId = req.user?._id;
+    if (!userId) {
         throw new ApiError(401,"User unauthorized")
     }
     const content = req.body.content;
-    if (!content) {
+    if (!content || content.trim()=="") {
         throw new ApiError(400,"Content is Required")
     }
     const tweet = await Tweet.create({
         content,
-        user
+        owner: userId
     })
     if (!tweet) {
         throw new ApiError(500, "Something went wrong while creating the tweet")
@@ -78,7 +78,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
 
 const updateTweet = asyncHandler(async (req, res) => {
     //TODO: update tweet
-    const { toUpdateContent } = req.body;
+    const toUpdateContent = req.body.content;
     const { tweetId } = req.params;
     const userId = req.user?.id;
     if (!toUpdateContent) {
