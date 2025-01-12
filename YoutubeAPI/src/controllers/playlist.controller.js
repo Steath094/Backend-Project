@@ -69,12 +69,24 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .json(
-        new ApiResponse(200, playlist,"Playlists fetched Successfully")
+        new ApiResponse(200, playlist,"User's Playlists fetched Successfully")
     )
 })
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
+    if (!playlistId) {
+        throw new ApiError(400,"Playlist is required");
+    }
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) {
+        throw new ApiError(400,"No such Playlist exist with this  PlaylistID");
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,playlist,"Playlist fetched successfully bu PlaylistID")
+    )
 })
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
