@@ -7,7 +7,26 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body
+    if (name.trim()==="" || description.trim()==="") {
+        throw new ApiError(400,"Name and Description Both are required to make Playlist")
+    }
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+        throw new ApiError(401,"User unauthorized")
+    }
+    const playlist =await Playlist.create({
+        name,
+        description,
+        owner: user
+    })
 
+    if (!playlist) {
+        throw new ApiError(500, "Something went wrong while creating the playlist")
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, tweet, "Playlist created Successfully")
+    )
     //TODO: create playlist
 })
 
