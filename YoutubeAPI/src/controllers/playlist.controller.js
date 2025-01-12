@@ -27,17 +27,54 @@ const createPlaylist = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, tweet, "Playlist created Successfully")
     )
-    //TODO: create playlist
 })
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
     const {userId} = req.params
-    //TODO: get user playlists
+    if (!userId) {
+        throw new ApiError(400,"UserId is required while for searching for user playlist,Bad Request")
+    }
+    const loginUserId = req.user?._id;
+    if (userId!==loginUserId) {
+        throw new ApiError("Unauthorized Request");
+    }
+    const playlist = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup: {
+                from: "playlists",
+                localField: "_id",
+                foreignField: "owner",
+                as: "playlists"
+            }
+        },{
+            $addFields: {
+                tweets: {
+                    $first: "$playlists"
+                }
+            }
+        },{
+            $project:{
+                playlists: 1
+            }
+        }
+    ])
+    if(!playlist?.length){
+        throw new ApiError(400,"Playlists does not exist");
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, playlist,"Playlists fetched Successfully")
+    )
 })
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
-    //TODO: get playlist by id
 })
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
