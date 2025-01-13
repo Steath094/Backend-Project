@@ -71,7 +71,7 @@ const registerUser = asyncHandler( async (req, res) => {
     // console.log(avatar);
     
     if (!avatar) {
-        throw new ApiError(400, "Avatar file is required")
+        throw new ApiError(500, "Error occured while uploading the avatar image")
     }
    
 
@@ -292,7 +292,7 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
     }
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     if (!avatar) {
-        throw new ApiError(400,"Error while uploading on clodinary")
+        throw new ApiError(400,"Error while uploading on Avatar")
     }
 
     const user = await User.findByIdAndUpdate(
