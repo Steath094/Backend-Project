@@ -12,7 +12,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid Video ID")
     }
 
-    const comments = new Comment.aggregate([
+    const comments = await Comment.aggregate([
         {
             $match:{
                 video:new mongoose.Types.ObjectId(videoId)
@@ -87,12 +87,14 @@ const addComment = asyncHandler(async (req, res) => {
 })
 
 const updateComment = asyncHandler(async (req, res) => {
-    const commentId = req.params;
+    const { commentId } = req.params;
+    console.log(commentId);
+    
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
         throw new ApiError(400, "Invalid Comment ID")
     }
     const toUpdatecontent = req.body.content;
-    if (content.trim()=="") {
+    if (toUpdatecontent.trim()=="") {
         throw new ApiError(401,"Content is Reqired to Update Comment")
     } 
     const userId = req.user._id;
@@ -118,14 +120,16 @@ const updateComment = asyncHandler(async (req, res) => {
 
 const deleteComment = asyncHandler(async (req, res) => {
     // TODO: delete a comment
-    const commentId = req.params;
+    const { commentId }= req.params;
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
         throw new ApiError(400, "Invalid Comment ID")
     }
     const userId = req.user._id;
-    const deletedComment = await Comment.findOneAndDelete({_id:commentId,owner: userId});
-    if (!deletedComment) {
-        throw new ApiError(400,"Error While Deleting Comment")
+    console.log(userId.toString());
+    
+    const result = await Comment.deleteOne({_id:commentId,owner: userId});
+    if (result.deletedCount === 0) {
+        throw new ApiError(400,"Comment not found or you do not have permission to delete it")
     }
     return res
     .status(200)

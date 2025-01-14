@@ -1,9 +1,10 @@
-import mongoose, {Schema, Types} from "mongoose";
+import mongoose, {Schema} from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-const commentSchema = new Schema({
+const commentSchema = new Schema(
+    {
     content: {
-        typw: String,
+        type: String,
         required: true
     },
     video: {
