@@ -88,7 +88,6 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
-    console.log(commentId);
     
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
         throw new ApiError(400, "Invalid Comment ID")
@@ -125,7 +124,6 @@ const deleteComment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid Comment ID")
     }
     const userId = req.user._id;
-    console.log(userId.toString());
     
     const result = await Comment.deleteOne({_id:commentId,owner: userId});
     if (result.deletedCount === 0) {

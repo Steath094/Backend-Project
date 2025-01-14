@@ -1,5 +1,4 @@
 import mongoose, {isValidObjectId} from "mongoose"
-import {User} from "../models/user.model.js"
 import { Subscription } from "../models/subscription.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
@@ -17,7 +16,6 @@ const toggleSubscription = asyncHandler(async (req, res) => {
         throw new ApiError(400,"Cannot subscribe to own channel")
     }
     const isSubscribed = await Subscription.findOne({subscriber: userId,channel: channelId})
-    console.log(isSubscribed);
     
     if (isSubscribed) {
         await Subscription.deleteOne({subscriber: userId,channel: channelId})
