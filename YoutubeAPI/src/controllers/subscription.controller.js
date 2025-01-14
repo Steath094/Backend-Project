@@ -7,13 +7,18 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 
 const toggleSubscription = asyncHandler(async (req, res) => {
-    const {channelId} = req.params
-    // TODO: toggle subscription
+    const { channelId } = req.params
+    // toggle subscription
     if (!mongoose.Types.ObjectId.isValid(channelId)) {
         throw new ApiError(400,"Invalid Channel Id")
     }
     const userId = req.user?._id;
-    const isSubscribed = await Subscription.find({subscriber: userId,channel: channelId})
+    if (userId==channelId) {
+        throw new ApiError(400,"Cannot subscribe to own channel")
+    }
+    const isSubscribed = await Subscription.findOne({subscriber: userId,channel: channelId})
+    console.log(isSubscribed);
+    
     if (isSubscribed) {
         await Subscription.deleteOne({subscriber: userId,channel: channelId})
         return res.status(200).json(new ApiResponse(200, { isSubscribed: false }, "Unsubscribed to channel"));
@@ -26,7 +31,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-    const {channelId} = req.params
+    const { channelId } = req.params
     if (!mongoose.Types.ObjectId.isValid(channelId)) {
         throw new ApiError(400,"Invalid Channel Id")
     }
@@ -66,9 +71,9 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { subscriberId } = req.params
     if (!mongoose.Types.ObjectId.isValid(subscriberId)) {
-        throw new ApiError(400,"Invalid Channel Id")
+        throw new ApiError(400,"Invalid Subscriber Id")
     }
-    const channels = new Subscription.aggregate[
+    const channels = await Subscription.aggregate([
         {
             $match: { subscriber: new mongoose.Types.ObjectId(subscriberId) }
         },
@@ -90,7 +95,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
                 userName: '$channelDetails.userName'
             }
         }
-    ]
+    ])
     return res
     .status(200)
     .json(
