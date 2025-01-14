@@ -41,7 +41,8 @@ const videoSchema = new Schema(
         timestamps: true
     }
 )
-
+// Adding a text index for title and description
+videoSchema.index({ title: "text", description: "text" });
 videoSchema.plugin(mongooseAggregatePaginate)
 
 export const Video = mongoose.model("Video", videoSchema)

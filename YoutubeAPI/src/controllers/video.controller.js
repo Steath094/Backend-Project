@@ -4,7 +4,7 @@ import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudinary , deleteFromCloudinary} from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -49,8 +49,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
     pipeline.push({
         $project: {
             _id:1,
-            videoFile: 0,
-            isPublished: 0,
             thumbnail: 1,
             title:1,
             duration:1,
@@ -89,7 +87,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description} = req.body
-    // TODO: get video, upload to cloudinary, create video
+    // get video, upload to cloudinary, create video
     if (!title || !description) {
         throw new ApiError(401,"Title and Description both are required to publish videos");
     }
@@ -99,8 +97,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Video and thumbnail file both are required to publish videos")
     }
     const videoFile = await uploadOnCloudinary(videoFileLocalPath);
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-    
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);  
     if (!videoFile) {
         throw new ApiError(500, "Error occured while uploading the video")
     }
@@ -110,28 +107,25 @@ const publishAVideo = asyncHandler(async (req, res) => {
     }
     const video = await Video.create({
         videoFile: videoFile.url,
-        thumbnail,
+        thumbnail: thumbnail.url,
         title,
         description,
         duration: videoFile.duration,
         owner: req.user._id
     })
-    const createdVideo = await Video.findById(video._id);
-    if (!createdVideo) {
-        throw new ApiError(500, "Something went wrong while saving video details");
-    }
 
     // Return the created video object
     return res
     .status(201)
     .json(
-        new ApiResponse(200, createdVideo, "Video uploaded successfully")
+        new ApiResponse(200, video, "Video uploaded successfully")
     );
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    if(!!mongoose.Types.ObjectId.isValid(videoID)){
+    
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
         throw new ApiError(400,"Invalid Video ID")
     }
     const video = await Video.findById(videoId).select("-videoFile -isPublished")
@@ -151,22 +145,23 @@ const getVideoById = asyncHandler(async (req, res) => {
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: update video details like title, description, thumbnail
-    if(!!mongoose.Types.ObjectId.isValid(videoID)){
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
         throw new ApiError(400,"Invalid Video ID")
     }
     const { title , description } = req.body
     if (!title || !description) {
         throw new ApiError(400,"Title and Description is required to update video details")
     }
+
     const thmbnailLocalPath = req?.file.path;
     if (!thmbnailLocalPath) {
         throw new ApiError(401,"Thumbnail is required to update")
     }
-    const oldUser = await User.findById(req.user?._id);
-    if (!oldUser) {
-        throw new ApiError(404, "User not found");
+    const oldVideo = await Video.findById(videoId);
+    if (!oldVideo) {
+        throw new ApiError(404, "Video Not Found");
     }
-    const oldThumbnailUrl = oldUser.thumbnail;
+    const oldThumbnailUrl = oldVideo.thumbnail;
 
     // Delete old avatar from Cloudinary if it exists
     if (oldThumbnailUrl) {
@@ -177,8 +172,11 @@ const updateVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400,"Error while uploading Thumbnail")
     }
 
-    const video = await Video.findByIdAndUpdate(
-        videoId,
+    const video = await Video.findOneAndUpdate(
+        {
+            _id: videoId,
+            owner: req.user?._id
+        },
         {
             $set:{
                 thumbnail: thumbnail.url,
@@ -202,7 +200,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    if(!!mongoose.Types.ObjectId.isValid(videoID)){
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
         throw new ApiError(400,"Invalid Video ID")
     }
     const deletedVideo = await Video.deleteOne({_id:videoId,owner: req.user?._id});
@@ -218,28 +216,23 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    if(!!mongoose.Types.ObjectId.isValid(videoID)){
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
         throw new ApiError(400,"Invalid Video ID")
     }
-    const video = await Video.findOneAndUpdate(
+    const video = await Video.findOne(
         { 
             _id: videoId,
             owner: req.user._id
-        },
-        {
-            $set: {
-                isPublished: { $not: { $eq: true } } 
-            } 
-        },
-        {new: true}
-    ).select("-videoFile -isPublished")
-    if (video) {
+        })
+    if (!video) {
         throw new ApiError(404, "Video not found");
     }
+    video.isPublished = !video.isPublished;
+    const savedVideo = await video.save({validateBeforeSave: false})
     return res
     .status(200)
     .json(
-        new ApiResponse(200,video,"Publish Status Toggled")
+        new ApiResponse(200,savedVideo,"Publish Status Toggled")
     )
 })
 
