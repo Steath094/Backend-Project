@@ -31,7 +31,7 @@ const createTweet = asyncHandler(async (req, res) => {
 const getUserTweets = asyncHandler(async (req, res) => {
     // TODO: get user tweets
     const { userId } = req.params;
-    if (!userId) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
         throw new ApiError(400, "UserId is missing")
     }
 
@@ -48,13 +48,8 @@ const getUserTweets = asyncHandler(async (req, res) => {
                 foreignField: "owner",
                 as: "tweets"
             }
-        },{
-            $addFields: {
-                tweets: {
-                    $first: "$tweets"
-                }
-            }
-        },{
+        }
+        ,{
             $project:{
                 fullName: 1,
                 tweets: 1,
@@ -80,20 +75,27 @@ const updateTweet = asyncHandler(async (req, res) => {
     //TODO: update tweet
     const toUpdateContent = req.body.content;
     const { tweetId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(tweetId)) {
+        throw new ApiError(400,"Invalid Tweet Id")
+    }
     const userId = req.user?.id;
     if (!toUpdateContent) {
         throw new ApiError(400,"Content field is required")
     }
-    const tweet =await Tweet.findById(tweetId);
+    const tweet =await Tweet.findOneAndUpdate(
+        {
+            _id: tweetId,
+            owner:new mongoose.Types.ObjectId(userId)
+        },
+        {
+            $set:{
+                content: toUpdateContent
+            }
+        }
+    );
     if (!tweet) {
-        throw new ApiError(400,"Invald Tweet id");
+        throw new ApiError(400,"Unauthorized Request access");
     }
-    if (tweet.owner!==userId) {
-        throw new ApiError(401,"Unauthorized Request access")
-    }
-    tweet.content = toUpdateContent;
-    await tweet.save({validateBeforeSave: false})
-    
     return res
     .status(200)
     .json(new ApiResponse(200, {}, "Tweet updated Successfully"))

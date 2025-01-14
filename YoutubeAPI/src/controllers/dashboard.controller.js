@@ -36,7 +36,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
         {
             $unwind: {
                 path: '$channelDetails',
-                preserveNullAndEmptyArrays: true // Optional: if you want to keep channels without videos
+                preserveNullAndEmptyArrays: true
             }
         },
         {
