@@ -15,7 +15,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     const stats = await Video.aggregate([
         {
-            $match: { owner: mongoose.Types.ObjectId(channelId) } // Match videos by the owner (channelId)
+            $match: { owner:new mongoose.Types.ObjectId(channelId) } // Match videos by the owner (channelId)
         },
         {
             $group: {
@@ -46,7 +46,6 @@ const getChannelStats = asyncHandler(async (req, res) => {
                 totalViews: 1, // Include total views
                 totalLikes: 1, // Include total likes
                 totalVideos: 1, // Include total videos
-                totalSubscribers: { $size: '$channelDetails.subscribers' }, // Count subscribers from the channel details
                 channelName: '$channelDetails.username', // Include channel name
                 channelAvatar: '$channelDetails.avatar' // Include channel avatar
             }
@@ -89,11 +88,17 @@ const getChannelVideos = asyncHandler(async (req, res) => {
         }
     ])
     if (videoList.length===0) {
-        return res.status(200).json(200,[], "No Videos Found")
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200,[], "No Videos Found")
+        )
     }
     return res
     .status(200)
-    .json(200,videoList, "Videos Fetched Successfully")
+    .json(
+        new ApiResponse(200,videoList, "Videos Fetched Successfully")
+    )
 })
 
 export {
