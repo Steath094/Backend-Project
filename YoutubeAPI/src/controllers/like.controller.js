@@ -3,7 +3,6 @@ import {Like} from "../models/like.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
-import { formatDistanceToNowStrict } from 'date-fns';
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const {videoId} = req.params
     if (!isValidObjectId(videoId)) {
@@ -32,7 +31,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         return res.status(200).json(new ApiResponse(200, { liked: false }, "Like on Comment removed successfully"));
     }else{
         await Like.create({comment: commentId,likedBy: userId})
-        return res.status(200).json(new ApiResponse(200, { liked: true }, "Like n Comment added successfully"));
+        return res.status(200).json(new ApiResponse(200, { liked: true }, "Like on Comment added successfully"));
     }
 
 })
@@ -49,7 +48,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         return res.status(200).json(new ApiResponse(200, { liked: false }, "Like on Tweet removed successfully"));
     }else{
         await Like.create({tweet: tweetId,likedBy: userId})
-        return res.status(200).json(new ApiResponse(200, { liked: true }, "Like n Tweet added successfully"));
+        return res.status(200).json(new ApiResponse(200, { liked: true }, "Like on Tweet added successfully"));
     }
 }
 )
