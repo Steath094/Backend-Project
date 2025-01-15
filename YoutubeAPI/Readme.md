@@ -92,7 +92,7 @@ This backend is built using **Node.js**, **Express.js**, **MongoDB**, **Mongoose
 4. Start the server:
 
     ```bash
-    npm start
+    npm run dev
     ```
 
     The backend will be available at `http://localhost:8000`.
